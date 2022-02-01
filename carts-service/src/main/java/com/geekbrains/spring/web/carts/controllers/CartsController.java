@@ -1,18 +1,34 @@
-package com.geekbrains.spring.web.core.controllers;
+package com.geekbrains.spring.web.carts.controllers;
 
+import com.geekbrains.spring.web.api.dto.CartDto;
+import com.geekbrains.spring.web.api.dto.ProductDto;
 import com.geekbrains.spring.web.api.dto.StringResponse;
-import com.geekbrains.spring.web.core.dto.Cart;
-import com.geekbrains.spring.web.core.services.CartService;
-import com.geekbrains.spring.web.core.services.ProductsService;
+import com.geekbrains.spring.web.carts.converters.CartConverter;
+import com.geekbrains.spring.web.carts.dto.Cart;
+import com.geekbrains.spring.web.carts.services.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 @RestController
 @RequestMapping("/api/v1/cart")
 @RequiredArgsConstructor
 public class CartsController {
     private final CartService cartService;
-    private final ProductsService productsService;
+    private final RestTemplate restTemplate;
+    private final CartConverter cartConverter;
+
+    @GetMapping
+    public CartDto getCartForOrder (@RequestParam String username){
+        String cartKey = cartService.getCartUuidFromSuffix(username);
+        return cartConverter.cartToDto(cartService.getCurrentCart(cartKey));
+    }
+    @GetMapping("/clear")
+    public void clearCart(@RequestParam String username){
+        String cartKey = cartService.getCartUuidFromSuffix(username);
+        cartService.clearCart(cartKey);
+    }
+
 
     @GetMapping("/{uuid}")
     public Cart getCart(@RequestHeader(required = false) String username, @PathVariable String uuid) {
@@ -26,7 +42,8 @@ public class CartsController {
 
     @GetMapping("/{uuid}/add/{productId}")
     public void add(@RequestHeader(required = false) String username, @PathVariable String uuid, @PathVariable Long productId) {
-        cartService.addToCart(getCurrentCartUuid(username, uuid), productId);
+        ProductDto productDto = restTemplate.getForObject("http://localhost:8189/web-market-core/api/v1/products/" + productId, ProductDto.class);
+        cartService.addToCart(getCurrentCartUuid(username, uuid), productDto);
     }
 
     @GetMapping("/{uuid}/decrement/{productId}")
@@ -50,6 +67,11 @@ public class CartsController {
                 getCurrentCartUuid(username, null),
                 getCurrentCartUuid(null, uuid)
         );
+    }
+
+    @GetMapping("/testCart")
+    public String test() {
+       return "Test cart OK";
     }
 
     private String getCurrentCartUuid(String username, String uuid) {

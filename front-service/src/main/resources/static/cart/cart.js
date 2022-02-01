@@ -1,5 +1,5 @@
 angular.module('market-front').controller('cartController', function ($scope, $http, $location, $localStorage) {
-    const contextPath = 'http://localhost:5555/core/';
+    const contextPath = 'http://localhost:5555/cart/';
 
     $scope.loadCart = function () {
         $http({
@@ -15,7 +15,7 @@ angular.module('market-front').controller('cartController', function ($scope, $h
     }
 
     $scope.clearCart = function () {
-        $http.get(contextPath + 'api/v1/cart/' + $localStorage.springWebGuestCartId + '/clear')
+        $http.get(contextPath + 'http://localhost:5555/core/api/v1/cart/' + $localStorage.springWebGuestCartId + '/clear')
             .then(function (response) {
                 $scope.loadCart();
             });
